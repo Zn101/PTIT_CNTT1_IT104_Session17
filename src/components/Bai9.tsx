@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Todo {
   id: number;
@@ -7,20 +7,37 @@ interface Todo {
 }
 
 export default function TodoList() {
-  const [todos, setTodos] = useState<Todo[]>([
-    { id: 1, text: "Cras justo odio", completed: true },
-    { id: 2, text: "Cras justo odio", completed: false },
-  ]);
-
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [newTodo, setNewTodo] = useState<string>("");
   const [editId, setEditId] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+  useEffect(() => {
+    const savedTodos = localStorage.getItem("todos");
+    if (savedTodos) {
+      setTodos(JSON.parse(savedTodos));
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("todos", JSON.stringify(todos));
+  }, [todos]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTodo.trim()) return;
+
+    if (!newTodo.trim()) {
+      setError("Tên công việc không được để trống!");
+      return;
+    }
+    if (todos.some((todo) => todo.text.toLowerCase() === newTodo.toLowerCase())) {
+      setError("Tên công việc đã tồn tại!");
+      return;
+    }
+
     setTodos([...todos, { id: Date.now(), text: newTodo, completed: false }]);
     setNewTodo("");
+    setError("");
   };
 
   const handleToggle = (id: number) => {
@@ -31,8 +48,11 @@ export default function TodoList() {
     );
   };
 
-  const handleDelete = (id: number) => {
-    setTodos(todos.filter((todo) => todo.id !== id));
+  const handleDeleteConfirm = () => {
+    if (deleteId !== null) {
+      setTodos(todos.filter((todo) => todo.id !== deleteId));
+      setDeleteId(null);
+    }
   };
 
   const handleEdit = (id: number, text: string) => {
@@ -41,6 +61,10 @@ export default function TodoList() {
   };
 
   const handleSaveEdit = (id: number) => {
+    if (!editText.trim()) {
+      alert("Tên công việc không được để trống!");
+      return;
+    }
     setTodos(
       todos.map((todo) =>
         todo.id === id ? { ...todo, text: editText } : todo
@@ -61,7 +85,6 @@ export default function TodoList() {
                   Quản lý công việc
                 </h3>
 
-                {/* Form to add new task */}
                 <form
                   className="d-flex justify-content-center align-items-center mb-4"
                   onSubmit={handleAdd}
@@ -80,14 +103,8 @@ export default function TodoList() {
                   </button>
                 </form>
 
-                {/* Tabs nav */}
-                <ul className="nav nav-tabs mb-4 pb-2" id="ex1" role="tablist">
-                  <li className="nav-item" role="presentation">
-                    <span className="nav-link active">Tất cả công việc</span>
-                  </li>
-                </ul>
+                {error && <p className="text-danger">{error}</p>}
 
-                {/* Todo List */}
                 <ul className="list-group mb-0">
                   {todos.map((todo) => (
                     <li
@@ -139,7 +156,7 @@ export default function TodoList() {
                           href="#!"
                           className="text-danger"
                           title="Xóa công việc"
-                          onClick={() => handleDelete(todo.id)}
+                          onClick={() => setDeleteId(todo.id)}
                         >
                           <i className="fas fa-trash-alt"></i>
                         </a>
@@ -147,12 +164,51 @@ export default function TodoList() {
                     </li>
                   ))}
                 </ul>
-                {/* End Todo List */}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {deleteId !== null && (
+        <div
+          className="modal fade show"
+          style={{ display: "block", backgroundColor: "rgba(0,0,0,0.5)" }}
+        >
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Xác nhận xóa</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setDeleteId(null)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>Bạn có chắc muốn xóa công việc này?</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setDeleteId(null)}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  onClick={handleDeleteConfirm}
+                >
+                  Đồng ý
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
+
