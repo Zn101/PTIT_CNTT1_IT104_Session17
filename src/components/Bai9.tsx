@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+import "bootstrap/dist/css/bootstrap.min.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+
 interface Todo {
   id: number;
   text: string;
@@ -12,13 +15,19 @@ export default function TodoList() {
   const [editId, setEditId] = useState<number | null>(null);
   const [editText, setEditText] = useState<string>("");
   const [error, setError] = useState<string>("");
+
+  // Modal delete
   const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  // Load data từ localStorage khi mở trang
   useEffect(() => {
     const savedTodos = localStorage.getItem("todos");
     if (savedTodos) {
       setTodos(JSON.parse(savedTodos));
     }
   }, []);
+
+  // Lưu todos vào localStorage mỗi khi thay đổi
   useEffect(() => {
     localStorage.setItem("todos", JSON.stringify(todos));
   }, [todos]);
@@ -85,6 +94,7 @@ export default function TodoList() {
                   Quản lý công việc
                 </h3>
 
+                {/* Form thêm task */}
                 <form
                   className="d-flex justify-content-center align-items-center mb-4"
                   onSubmit={handleAdd}
@@ -103,8 +113,10 @@ export default function TodoList() {
                   </button>
                 </form>
 
+                {/* Hiển thị lỗi */}
                 {error && <p className="text-danger">{error}</p>}
 
+                {/* Danh sách công việc */}
                 <ul className="list-group mb-0">
                   {todos.map((todo) => (
                     <li
@@ -170,6 +182,7 @@ export default function TodoList() {
         </div>
       </div>
 
+      {/* Modal xác nhận xóa */}
       {deleteId !== null && (
         <div
           className="modal fade show"
@@ -211,4 +224,3 @@ export default function TodoList() {
     </section>
   );
 }
-
